@@ -36,11 +36,11 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Repository:*\n${{ github.repository }}\n"
+                      "text": "*Repository:*\n ${{ github.repository }} \n"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Issue #:*\n#${{ github.event.issue.number }}\n"
+                      "text": "*Issue #:*\n #${{ github.event.issue.number }} \n"
                     },
                     {
                       "type": "mrkdwn",
