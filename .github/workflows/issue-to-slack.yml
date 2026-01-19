@@ -56,9 +56,6 @@ jobs:
                   }
                 },
                 {
-                  "type": "divider"
-                },
-                {
                   "type": "actions",
                   "elements": [
                     {
@@ -73,5 +70,9 @@ jobs:
                     }
                   ]
                 }
+                {
+                  "type": "divider"
+                }
+                
               ]
             }
