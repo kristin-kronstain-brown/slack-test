@@ -22,33 +22,37 @@ jobs:
           payload: |
             {
               "channel": "${{ env.SLACK_CHANNEL_ID }}",
-              "text": "New issue created: ${{ github.event.issue.title }}",
+              "text": "📋 New issue created: ${{ github.event.issue.title }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "New Issue Created"
+                    "text": "📋 New Issue Created",
+                    "emoji": true
                   }
+                },
+                {
+                  "type": "divider"
                 },
                 {
                   "type": "section",
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Repository:*\n ${{ github.repository }} \n"
+                      "text": "*📦 Repository*\n`${{ github.repository }}`"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Issue #:*\n #${{ github.event.issue.number }} \n"
+                      "text": "*🔢 Issue #*\n`#${{ github.event.issue.number }}`"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Title:*\n${{ github.event.issue.title }}"
+                      "text": "*✍️  Author*\n`@${{ github.event.issue.user.login }}`"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Author:*\n${{ github.event.issue.user.login }}"
+                      "text": "*📅 Created*\n<!date^${{ github.event.issue.created_at }}^{date_short_pretty}|${{ github.event.issue.created_at }}>"
                     }
                   ]
                 },
@@ -56,8 +60,18 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Description:*\n${{ github.event.issue.body }}"
+                    "text": "*📝 Title*\n${{ github.event.issue.title }}"
                   }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📄 Description*\n${{ github.event.issue.body }}"
+                  }
+                },
+                {
+                  "type": "divider"
                 },
                 {
                   "type": "actions",
@@ -66,9 +80,11 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "View Issue"
+                        "text": "🔗 View Issue on GitHub",
+                        "emoji": true
                       },
-                      "url": "${{ github.event.issue.html_url }}"
+                      "url": "${{ github.event.issue.html_url }}",
+                      "style": "primary"
                     }
                   ]
                 }
