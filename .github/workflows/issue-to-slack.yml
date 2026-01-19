@@ -69,7 +69,7 @@ jobs:
                       "style": "primary"
                     }
                   ]
-                }
+                },
                 {
                   "type": "divider"
                 }
