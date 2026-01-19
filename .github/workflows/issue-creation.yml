@@ -76,3 +76,47 @@ jobs:
                 
               ]
             }
+
+  add-to-project:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Add issue to project
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const projectQuery = `
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                  }
+                }
+              }
+            `;
+            
+            const projectResponse = await github.graphql(projectQuery, {
+              org: 'solo-io',
+              number: 182
+            });
+            
+            const projectId = projectResponse.organization.projectV2.id;
+            
+            const addItemMutation = `
+              mutation($project: ID!, $item: ID!) {
+                addProjectV2ItemById(input: {projectId: $project, contentId: $item}) {
+                  item {
+                    id
+                  }
+                }
+              }
+            `;
+            
+            await github.graphql(addItemMutation, {
+              project: projectId,
+              item: context.payload.issue.node_id
+            });
+            
+            console.log(`Added issue #${context.payload.issue.number} to project`);
