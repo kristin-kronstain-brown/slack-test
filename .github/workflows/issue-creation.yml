@@ -86,37 +86,70 @@ jobs:
       - name: Add issue to project
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
-            const projectQuery = `
-              query($org: String!, $number: Int!) {
-                organization(login: $org) {
-                  projectV2(number: $number) {
-                    id
+            try {
+              const org = 'solo-io';
+              const projectNumber = 182;
+              
+              // First, verify the project exists
+              const projectQuery = `
+                query($org: String!, $number: Int!) {
+                  organization(login: $org) {
+                    projectV2(number: $number) {
+                      id
+                      title
+                    }
                   }
                 }
+              `;
+              
+              console.log(`Looking for ProjectV2 #${projectNumber} in organization ${org}...`);
+              
+              const projectResponse = await github.graphql(projectQuery, {
+                org: org,
+                number: projectNumber
+              });
+              
+              if (!projectResponse.organization?.projectV2) {
+                throw new Error(`ProjectV2 #${projectNumber} not found in organization ${org}. It may be a ProjectV1 (classic project) or the project number may be incorrect.`);
               }
-            `;
-            
-            const projectResponse = await github.graphql(projectQuery, {
-              org: 'solo-io',
-              number: 182
-            });
-            
-            const projectId = projectResponse.organization.projectV2.id;
-            
-            const addItemMutation = `
-              mutation($project: ID!, $item: ID!) {
-                addProjectV2ItemById(input: {projectId: $project, contentId: $item}) {
-                  item {
-                    id
+              
+              const projectId = projectResponse.organization.projectV2.id;
+              const projectTitle = projectResponse.organization.projectV2.title;
+              
+              console.log(`Found project: ${projectTitle} (ID: ${projectId})`);
+              
+              // Add the issue to the project
+              const addItemMutation = `
+                mutation($project: ID!, $item: ID!) {
+                  addProjectV2ItemById(input: {projectId: $project, contentId: $item}) {
+                    item {
+                      id
+                    }
                   }
                 }
+              `;
+              
+              await github.graphql(addItemMutation, {
+                project: projectId,
+                item: context.payload.issue.node_id
+              });
+              
+              console.log(`✅ Successfully added issue #${context.payload.issue.number} to project "${projectTitle}"`);
+            } catch (error) {
+              console.error('❌ Error adding issue to project:', error.message);
+              console.error('Full error:', JSON.stringify(error, null, 2));
+              
+              // If it's a permissions error, provide helpful guidance
+              if (error.message.includes('Could not resolve') || error.message.includes('permission')) {
+                console.error('\n💡 Troubleshooting tips:');
+                console.error('1. Verify the project number (182) is correct');
+                console.error('2. Ensure the project is a ProjectV2 (not a classic ProjectV1)');
+                console.error('3. The GITHUB_TOKEN may not have organization project permissions');
+                console.error('4. Consider using a PAT with "project" scope stored in secrets');
               }
-            `;
-            
-            await github.graphql(addItemMutation, {
-              project: projectId,
-              item: context.payload.issue.node_id
-            });
-            
-            console.log(`Added issue #${context.payload.issue.number} to project`);
+              
+              // Don't fail the workflow, just log the error
+              core.setFailed(`Failed to add issue to project: ${error.message}`);
+            }
