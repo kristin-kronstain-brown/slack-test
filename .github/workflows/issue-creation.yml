@@ -5,8 +5,25 @@ on:
     types: [opened]
 
 jobs:
+  check-labels:
+    runs-on: ubuntu-latest
+    outputs:
+      has-label: ${{ steps.check.outputs.has-label }}
+    steps:
+      - name: Check for labels
+        id: check
+        run: |
+          LABELS="${{ join(github.event.issue.labels.*.name, ' ') }}"
+          if [[ "$LABELS" == *"oss"* ]] || [[ "$LABELS" == *"engineering"* ]]; then
+            echo "has-label=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-label=false" >> $GITHUB_OUTPUT
+          fi
+
   notify-slack:
     runs-on: ubuntu-latest
+    needs: check-labels
+    if: needs.check-labels.outputs.has-label == 'true'
     steps:
       - name: Post to Slack
         uses: slackapi/slack-github-action@v2.0.0
@@ -79,6 +96,8 @@ jobs:
 
   add-to-project:
     runs-on: ubuntu-latest
+    needs: check-labels
+    if: needs.check-labels.outputs.has-label == 'true'
     permissions:
       issues: write
       contents: read
